@@ -5591,6 +5591,7 @@ body.about-page { min-height: 100dvh; background: var(--bg); }
   background: transparent;
   font-size: 12px;
   white-space: nowrap;
+  transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 .room-create-flow .room-duration-chips button:not(.is-selected):hover {
   border-color: transparent;
