@@ -1073,15 +1073,36 @@ async function openCreateRoom(event) {
     window.lucide?.createIcons();
   };
 
-  renderCreateRoomState('duration-selection', `<div class="room-create-start-screen"><div class="room-create-start-heading"><div class="eyebrow">CREATE A ROOM</div><h2 class="modal-title" id="modal-title">Choose how long it stays open.</h2><p class="modal-copy">Room and files are deleted when time ends.</p></div><div class="room-create-start-controls"><span class="room-setting-label">Room duration</span><div class="room-duration-chips" role="group" aria-label="Room duration"><button type="button" data-duration="10">10 minutes</button><button type="button" class="is-selected" data-duration="30">30 minutes</button><button type="button" data-duration="60">1 hour</button><button type="button" data-duration="120">2 hours</button></div><div class="modal-actions"><button class="button button-primary" id="create-room-confirm" type="button"><i data-lucide="plus"></i><span>Create room</span></button></div></div></div>`);
+  renderCreateRoomState('duration-selection', `<div class="room-create-start-screen"><div class="room-create-start-heading"><div class="eyebrow">CREATE A ROOM</div><h2 class="modal-title" id="modal-title">Choose how long it stays open.</h2><p class="modal-copy">Room and files are deleted when time ends.</p></div><div class="room-create-start-controls"><span class="room-setting-label">Room duration</span><div class="room-duration-chips" role="group" aria-label="Room duration"><span class="chips-slider" aria-hidden="true"></span><button type="button" data-duration="10">10 minutes</button><button type="button" class="is-selected" data-duration="30">30 minutes</button><button type="button" data-duration="60">1 hour</button><button type="button" data-duration="120">2 hours</button></div><div class="modal-actions"><button class="button button-primary" id="create-room-confirm" type="button"><i data-lucide="plus"></i><span>Create room</span></button></div></div></div>`);
   modal?.querySelector('.room-modal')?.classList.add('room-create-flow');
   openModal();
   let lifetimeMinutes = 30;
+
+  const moveSlider = (chip) => {
+    const slider = document.querySelector('.room-duration-chips .chips-slider');
+    if (!slider || !chip) return;
+    slider.style.width  = chip.offsetWidth  + 'px';
+    slider.style.height = chip.offsetHeight + 'px';
+    slider.style.transform = `translateX(${chip.offsetLeft}px)`;
+  };
+
+  // position slider on the default selected chip immediately (no transition on first paint)
+  requestAnimationFrame(() => {
+    const defaultChip = document.querySelector('.room-duration-chips .is-selected');
+    const slider = document.querySelector('.room-duration-chips .chips-slider');
+    if (slider) slider.style.transition = 'none';
+    moveSlider(defaultChip);
+    requestAnimationFrame(() => {
+      if (slider) slider.style.transition = '';
+    });
+  });
+
   document.querySelector('.room-duration-chips')?.addEventListener('click', event => {
     const option = event.target.closest('[data-duration]');
     if (!option) return;
     lifetimeMinutes = Number(option.dataset.duration);
     document.querySelectorAll('.room-duration-chips button').forEach(chip => chip.classList.toggle('is-selected', chip === option));
+    moveSlider(option);
   });
   document.querySelector('#create-room-confirm')?.addEventListener('click', async buttonEvent => {
     const button = buttonEvent.currentTarget;
