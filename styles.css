@@ -5705,7 +5705,11 @@ body.about-page { min-height: 100dvh; background: var(--bg); }
   overflow-wrap: anywhere;
 }
 .room-create-flow .room-share-details .create-room-code .room-code-digits {
-  color: #3b82f6;
+  display: inline-block;
+  padding: 3px 8px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  border: 1px solid var(--line);
 }
 .room-create-flow .room-share-details .create-room-waiting {
   justify-content: flex-start;
