@@ -1061,6 +1061,11 @@ a {
   letter-spacing: 0.08em;
   margin: 4px 0 12px;
   color: var(--ink);
+  display: inline-block;
+  padding: 6px 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  border: 1px solid var(--line);
 }
 
 .qr-panel {
@@ -3324,6 +3329,14 @@ footer {
   color: var(--muted);
 }
 
+.chat-room-badge b {
+  padding: 3px 8px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  letter-spacing: 0.05em;
+}
+
 .chat-room-badge .copy-icon {
   margin-left: 4px;
 }
@@ -4004,6 +4017,14 @@ body.chat-page .nav-actions [data-action="join"] {
   color: var(--muted);
 }
 
+.chat-room-badge b {
+  padding: 3px 8px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  letter-spacing: 0.05em;
+}
+
 .chat-header-icon-btn {
   display: inline-flex;
   align-items: center;
@@ -4207,6 +4228,11 @@ body.in-chat .chat-workspace.sidebar-collapsed {
   color: var(--ink);
   margin: 6px 0 10px;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  display: inline-block;
+  padding: 6px 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  border: 1px solid var(--line);
 }
 
 .copy-sidebar-btn {
@@ -5691,6 +5717,11 @@ body.about-page { min-height: 100dvh; background: var(--bg); }
   letter-spacing: -.01em;
   text-align: left;
   overflow-wrap: anywhere;
+  display: inline-block;
+  padding: 6px 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  border: 1px solid var(--line);
 }
 .room-create-flow .room-share-details .create-room-waiting {
   justify-content: flex-start;
