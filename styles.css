@@ -3218,7 +3218,7 @@ footer {
 .button, .button-small { border-radius: 14px; }
 .button:active { transform: translateY(0) scale(.98); }
 .join-input, .room-composer input { border-radius: 14px; }
-.join-input:focus, .room-composer input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
+.join-input:focus, .room-composer input:focus { outline: none; }
 .chat-page .chat-primary-column, .chat-page .sidebar-card { box-shadow: 0 2px 10px rgba(0,0,0,.03); }
 .chat-page .chat-app-view { background: var(--bg); }
 .chat-page .chat-primary-column { border-radius: 16px; }
