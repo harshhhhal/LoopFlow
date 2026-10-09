@@ -1,0 +1,113 @@
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private Room | LoopFlow</title>
+  <meta name="description" content="A temporary LoopFlow room for moving messages and files between devices.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow, noarchive">
+  <link rel="canonical" href="https://loopfloww.vercel.app/chat">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="LoopFlow">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://loopfloww.vercel.app/chat">
+  <meta property="og:title" content="Private Room | LoopFlow">
+  <meta property="og:description" content="A temporary LoopFlow room for moving messages and files between devices.">
+  <meta property="og:image" content="https://loopfloww.vercel.app/og_image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="853">
+  <meta property="og:image:height" content="480">
+  <meta property="og:image:alt" content="LoopFlow — move text, links, and files between devices">
+  <meta name="theme-color" content="#12100e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fcfbfa" media="(prefers-color-scheme: light)">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prata&display=swap"
+    rel="stylesheet">
+  <script>(() => { if (localStorage.getItem('loopflow_theme') === 'dark') document.documentElement.classList.add('dark'); })();</script>
+  <link rel="stylesheet" href="styles.css?v=20261007-download-progress">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="chat-page simple-room-page">
+  <div class="page-loader" id="page-loader" aria-hidden="true"><img class="loader-mark" src="favicon.svg" alt=""><span
+      class="loader-line"></span></div>
+  <main class="chat-app-view simple-room-app" id="chat-view">
+    <header class="simple-room-header"><a class="simple-room-brand" href="/" aria-label="LoopFlow home"><img
+          class="brand-glyph" src="favicon.svg" alt=""><span>LoopFlow</span></a>
+      <div class="simple-room-meta"><button class="chat-room-badge" id="chat-room-badge" type="button"
+          aria-label="Copy room code"><i data-lucide="copy"></i><b id="chat-room-code-text">000 000</b></button>
+        <div class="chat-timer-badge"><i data-lucide="clock-3"></i><span id="chat-timer">30:00</span></div><button
+          class="theme-toggle" id="chat-theme-toggle" aria-label="Toggle dark mode"><i
+            data-lucide="sun-moon"></i></button><button class="button button-ghost button-small chat-header-clear-btn" id="clear-room-btn" type="button" title="Clear room (Ctrl+D)"><i data-lucide="eraser"></i><span>Clear</span></button><button class="chat-header-leave-btn" id="chat-header-leave-btn"
+          aria-label="Leave room (Ctrl+L)" title="Leave room (Ctrl+L)"><i data-lucide="x"></i><span>Leave</span></button>
+      </div>
+    </header>
+    <div class="chat-mobile-tabs"><button class="tab-btn active" data-tab="chat"><i data-lucide="message-square"></i>
+        Chat</button><button class="tab-btn" data-tab="info"><i data-lucide="info"></i> Room info</button></div>
+    <div class="chat-workspace simple-room-workspace">
+      <section class="chat-primary-column tab-content active" data-tab-content="chat">
+        <div class="simple-chat-heading">
+          <div><b>Room chat</b><span>Share text, links, and files.</span></div>
+        </div>
+        <div class="room-messages" id="room-messages" aria-live="polite">
+          <div class="message-skeletons"><span></span><span></span><span></span></div>
+        </div>
+        <div class="typing-indicator" id="typing-indicator" hidden><i></i><i></i><i></i><span>Someone is typing</span>
+        </div>
+        <div class="drop-overlay" id="drop-overlay" hidden>
+          <div class="drop-overlay-content">
+            <div class="drop-icon-pulse"><i data-lucide="upload-cloud"></i></div><b>Drop files to share</b><small>Files
+              up to 50MB</small>
+          </div>
+        </div>
+        <form class="room-composer" id="room-composer"><div class="upload-picker"><button class="composer-icon-button" id="upload-menu-toggle" type="button" aria-label="Add files or folder" title="Add files or folder" aria-expanded="false"><i data-lucide="link-2"></i></button><div class="upload-picker-menu" id="upload-picker-menu" hidden><button type="button" data-upload-choice="files"><i data-lucide="paperclip"></i><span>Upload files</span><kbd>Ctrl+U</kbd></button><button type="button" data-upload-choice="folder"><i data-lucide="folder-up"></i><span>Upload folder</span><kbd>Ctrl+U, F</kbd></button></div><input id="room-file" type="file" multiple><input id="room-folder" type="file" webkitdirectory directory multiple></div>
+          <button class="composer-icon-button" id="send-clipboard-btn" type="button" aria-label="Add clipboard text" title="Add clipboard text"><i data-lucide="clipboard-paste"></i></button><div class="composer-input-wrapper"><textarea id="room-message" rows="1" autocomplete="off"
+              placeholder="Write a message…" aria-label="Message"></textarea></div><button
+            class="button button-dark composer-send" type="submit" id="send-msg-btn"><span>Send</span><i
+              data-lucide="arrow-up"></i></button>
+        </form>
+      </section>
+      <aside class="chat-secondary-column tab-content" data-tab-content="info" id="chat-secondary-column">
+        <section class="simple-info-section"><span class="panel-label">ROOM CODE</span>
+          <div class="room-code-large" id="chat-sidebar-code">000 000</div><button class="copy-sidebar-btn"
+            id="copy-sidebar-code"><i data-lucide="copy"></i> Copy code</button>
+        </section>
+        <section class="simple-info-section simple-qr-section">
+          <div class="qr-panel" id="chat-qr-container" title="Click to enlarge QR code">
+            <div class="spinner"></div>
+          </div><button class="scan-label" type="button">Open QR code</button>
+        </section>
+        <section class="simple-info-section simple-stats">
+          <div><span class="panel-label">DEVICES</span><strong id="sidebar-device-count">1 connected</strong></div>
+          <div><span class="panel-label">EXPIRES IN</span><strong id="sidebar-timer">30:00</strong></div>
+        </section>
+        <section class="simple-files">
+          <div class="files-card-header"><span class="panel-label">SHARED FILES</span><span class="panel-badge"
+              id="sidebar-files-count">0</span></div>
+          <button class="download-all-files-button" id="download-all-files-btn" data-download-key="download-all" type="button" disabled
+            title="Download all shared files as a ZIP archive"><i data-lucide="archive-download"></i><span>Download all as ZIP</span></button>
+          <div class="room-files" id="room-files">
+            <div class="files-empty"><small>No files shared yet</small></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+  <div class="modal-backdrop" id="room-modal" hidden>
+    <div class="room-modal" role="dialog" aria-modal="true"><button class="modal-close" id="modal-close"
+        aria-label="Close modal"><i data-lucide="x"></i></button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script type="module" src="app.js?v=20261007-download-progress"></script>
+  <script>window.addEventListener('load', () => { window.lucide?.createIcons(); document.querySelector('#page-loader')?.classList.add('is-done'); if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js?v=4').then(registration => registration.update()).catch(() => {}); });</script>
+</body>
+
+</html>

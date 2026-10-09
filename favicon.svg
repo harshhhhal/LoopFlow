@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <style>
+    .bg { fill: #12100e; }
+    .fg-stroke { stroke: #fcfbfa; }
+    .fg-fill { fill: #fcfbfa; }
+    .accent { fill: #d97706; stroke: #fcfbfa; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #fcfbfa; }
+      .fg-stroke { stroke: #12100e; }
+      .fg-fill { fill: #12100e; }
+      .accent { fill: #d97706; stroke: #12100e; }
+    }
+  </style>
+  <rect width="64" height="64" rx="16" class="bg" />
+  <g transform="translate(32, 32) rotate(-8) translate(-32, -32)">
+    <rect x="15" y="15" width="34" height="34" rx="10" fill="none" class="fg-stroke" stroke-width="3.5" />
+    <line x1="22" y1="36" x2="42" y2="28" class="fg-stroke" stroke-width="3" stroke-linecap="round" />
+    <circle cx="22" cy="36" r="4.5" class="accent" stroke-width="2" />
+    <circle cx="42" cy="28" r="4.5" class="fg-fill" />
+  </g>
+</svg>

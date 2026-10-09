@@ -1,0 +1,93 @@
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoopFlow | Send Files Between Devices, Privately</title>
+  <meta name="description" content="Send text, links, and files between your devices in a temporary room. Join by QR code or six-digit code, track transfers, and choose LAN or internet.">
+  <meta name="keywords" content="file transfer between devices, send files phone to computer, local file sharing, QR file transfer, temporary file sharing, LoopFlow">
+  <meta name="author" content="harshhhhal">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://loopfloww.vercel.app/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="LoopFlow">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://loopfloww.vercel.app/">
+  <meta property="og:title" content="LoopFlow | Send Files Between Devices, Privately">
+  <meta property="og:description" content="Send text, links, and files between your devices in a temporary room. Join by QR code or six-digit code, track transfers, and choose LAN or internet.">
+  <meta property="og:image" content="https://loopfloww.vercel.app/og_image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="853">
+  <meta property="og:image:height" content="480">
+  <meta property="og:image:alt" content="LoopFlow — move text, links, and files between devices">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="LoopFlow | Send Files Between Devices, Privately">
+  <meta name="twitter:description" content="Send text, links, and files between your devices in a temporary room. Join by QR code or six-digit code, track transfers, and choose LAN or internet.">
+  <meta name="twitter:image" content="https://loopfloww.vercel.app/og_image.png">
+  <meta name="twitter:image:alt" content="LoopFlow — move text, links, and files between devices">
+  <meta name="theme-color" content="#12100e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fcfbfa" media="(prefers-color-scheme: light)">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prata&display=swap"
+    rel="stylesheet">
+  <script>(() => { if (localStorage.getItem('loopflow_theme') === 'dark') document.documentElement.classList.add('dark'); })();</script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"LoopFlow","url":"https://loopfloww.vercel.app/","description":"Send text, links, and files between your devices in a temporary room. Join by QR code or six-digit code, track transfers, and choose LAN or internet.","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","featureList":["Text and link sharing","File and folder transfers up to 50 MiB per file","LAN and Firebase rooms","QR code room joining","Transfer progress","Temporary rooms from 10 minutes to 2 hours"]}</script>
+</head>
+
+<body class="simple-home">
+  <div class="page-loader" id="page-loader" aria-hidden="true"><img class="loader-mark" src="favicon.svg" alt=""><span
+      class="loader-line"></span></div>
+  <div id="landing-view" class="simple-home-shell">
+    <header class="simple-home-header"><a class="simple-home-brand" href="#home" aria-label="LoopFlow home"><img
+          class="brand-glyph" src="favicon.svg" alt=""><span>LoopFlow</span></a><div class="simple-home-header-actions"><a
+          class="simple-home-about-link" href="about.html">About</a><button class="theme-toggle" id="theme-toggle"
+          aria-label="Toggle dark mode"><i data-lucide="sun-moon"></i></button></div>
+    </header>
+    <main id="home" class="simple-home-main">
+      <section class="simple-home-intro">
+        <h1>Move it.<br><em>Then forget it.</em></h1>
+        <p>Send text, links, and files from one device to another without creating an account.</p>
+        <div class="simple-home-actions"><button class="simple-create-room" data-action="create"><span
+              class="create-mark"><i data-lucide="plus"></i></span><span>Create a room</span><i
+              data-lucide="arrow-up-right"></i></button><button class="simple-join-button" data-action="join"><span>Join a room</span><i
+              data-lucide="arrow-right"></i></button></div>
+      </section>
+      <aside class="simple-home-help">
+        <div><i data-lucide="scan-line"></i>
+          <h2>How it works</h2>
+        </div>
+        <ol>
+          <li><span>1</span>
+            <p>Create a room on either device.</p>
+          </li>
+          <li><span>2</span>
+            <p>Scan its QR code or enter its six digits.</p>
+          </li>
+          <li><span>3</span>
+            <p>Share what you need. The room clears itself.</p>
+          </li>
+        </ol>
+      </aside>
+    </main>
+    <footer class="simple-home-footer"><span>Temporary rooms for quick handoffs.</span><span><a
+          href="https://github.com/harshhhhal/LoopFlow" target="_blank" rel="noopener noreferrer">View on GitHub</a></span></footer>
+  </div>
+  <div class="modal-backdrop" id="room-modal" hidden>
+    <section class="room-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button
+        type="button" class="modal-close" id="modal-close" aria-label="Close modal"><i data-lucide="x"></i></button>
+      <div id="modal-content"></div>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script type="module" src="app.js"></script>
+  <script>window.addEventListener('load', () => { window.lucide?.createIcons(); document.querySelector('#page-loader')?.classList.add('is-done'); if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js?v=4').then(registration => registration.update()).catch(() => {}); });</script>
+</body>
+
+</html>

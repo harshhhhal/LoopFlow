@@ -1,0 +1,6 @@
+﻿User-agent: *
+Allow: /
+Disallow: /chat
+Disallow: /chat.html
+
+Sitemap: https://loopfloww.vercel.app/sitemap.xml

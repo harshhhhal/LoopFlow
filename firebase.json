@@ -1,0 +1,21 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "hosting": {
+    "public": ".",
+    "rewrites": [
+      { "source": "/chat", "destination": "/chat.html" }
+    ],
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "storage.rules",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}

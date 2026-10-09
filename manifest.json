@@ -1,0 +1,12 @@
+﻿{
+  "name": "LoopFlow",
+  "short_name": "LoopFlow",
+  "description": "Send text, links, and files between devices with temporary rooms.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3eee3",
+  "theme_color": "#071635",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
