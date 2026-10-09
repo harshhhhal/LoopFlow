@@ -1120,7 +1120,7 @@ async function openCreateRoom(event) {
       const createdRoom = await createRoom(code, lifetimeMinutes);
       const roomUrl = `${location.origin}${location.pathname.startsWith('/chat') ? '/chat' : location.pathname}?room=${code}`;
       const formattedCode = `${code.slice(0, 3)} ${code.slice(3)}`;
-      renderCreateRoomState('room-created', `<div class="room-create-screen-enter"><div class="room-share-header"><div class="eyebrow">ROOM CREATED</div><h2 class="modal-title" id="modal-title">Share your room.</h2><p class="modal-copy">Scan to join.</p></div><div class="room-share-layout"><div class="room-share-qr-column"><div class="qr-large-card create-room-qr" id="create-room-qr"></div></div><div class="room-share-details"><p class="create-room-code">Room ${escapeHtml(formattedCode)}</p><div class="create-room-waiting" role="status" aria-live="polite"><span class="create-room-pulse" aria-hidden="true"></span><span id="create-room-waiting">Ready to connect</span></div><div class="modal-actions"><button class="button button-primary" id="enter-created-room" type="button">Enter room now</button></div></div></div></div>`);
+      renderCreateRoomState('room-created', `<div class="room-create-screen-enter"><div class="room-share-header"><div class="eyebrow">ROOM CREATED</div><h2 class="modal-title" id="modal-title">Share your room.</h2><p class="modal-copy">Scan to join.</p></div><div class="room-share-layout"><div class="room-share-qr-column"><div class="qr-large-card create-room-qr" id="create-room-qr"></div></div><div class="room-share-details"><p class="create-room-code">Room <span class="room-code-digits">${escapeHtml(formattedCode)}</span></p><div class="create-room-waiting" role="status" aria-live="polite"><span class="create-room-pulse" aria-hidden="true"></span><span id="create-room-waiting">Ready to connect</span></div><div class="modal-actions"><button class="button button-primary" id="enter-created-room" type="button">Enter room now</button></div></div></div></div>`);
       const qr = document.querySelector('#create-room-qr');
       if (qr && window.QRCode) {
         new window.QRCode(qr, { text: roomUrl, width: 208, height: 208, colorDark: '#0f172a', colorLight: '#ffffff', correctLevel: window.QRCode.CorrectLevel.H });
@@ -1276,8 +1276,8 @@ function openChat(code, { creator = false, mode = lanMode ? 'lan' : 'firebase' }
 
   // Format code display
   const formattedCode = `${code.slice(0, 3)} ${code.slice(3)}`;
-  document.querySelector('#chat-room-code-text').textContent = formattedCode;
-  document.querySelector('#chat-sidebar-code').textContent = formattedCode;
+  document.querySelector('#chat-room-code-text').innerHTML = `<span class="room-code-digits">${formattedCode}</span>`;
+  document.querySelector('#chat-sidebar-code').innerHTML = `<span class="room-code-digits">${formattedCode}</span>`;
 
   // Setup Sidebar QR
   const qrContainer = document.querySelector('#chat-qr-container');
