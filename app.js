@@ -1211,7 +1211,8 @@ async function connectToRoom(code, button, idleLabel) {
   }
 }
 
-function openJoinRoom(prefilledCode = '') {
+function openJoinRoom(prefilledCode) {
+  if (typeof prefilledCode !== 'string') prefilledCode = '';
   openModal(`<div class="eyebrow">JOIN A ROOM</div><h2 class="modal-title" id="modal-title">Meet your other device.</h2><p class="modal-copy">Scan the QR or enter the six-digit code shown on the device that created the room.</p><button class="button button-ghost button-small join-scan-trigger" id="scan-room-btn" type="button"><i data-lucide="scan-line"></i><span>Scan QR code</span></button><div class="join-scanner" id="join-scanner" hidden><div class="join-video-frame"><video id="join-qr-video" playsinline muted aria-label="QR code camera preview"></video><span class="join-scan-corner join-scan-corner-top-left"></span><span class="join-scan-corner join-scan-corner-top-right"></span><span class="join-scan-corner join-scan-corner-bottom-left"></span><span class="join-scan-corner join-scan-corner-bottom-right"></span></div><p class="join-scanner-status" id="join-scanner-status" role="status"></p><button class="button button-ghost button-small" id="stop-scan-btn" type="button">Stop camera</button></div><label class="join-code-label" for="join-code">Room code</label><input class="join-input" id="join-code" maxlength="6" inputmode="numeric" placeholder="000 000" aria-label="Six digit room code"><div class="modal-actions" style="margin-top:22px"><button class="button button-primary" id="connect-room"><span>Connect to room</span> <span>\u2192</span></button></div>`);
   const input = document.querySelector('#join-code');
   input.value = prefilledCode;
