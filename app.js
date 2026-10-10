@@ -1083,7 +1083,7 @@ async function openCreateRoom(event) {
     if (!slider || !chip) return;
     slider.style.width  = chip.offsetWidth  + 'px';
     slider.style.height = chip.offsetHeight + 'px';
-    slider.style.transform = `translateX(${chip.offsetLeft}px)`;
+    slider.style.transform = `translate(${chip.offsetLeft}px, ${chip.offsetTop}px)`;
   };
 
   // position slider on the default selected chip immediately (no transition on first paint)
@@ -1183,7 +1183,7 @@ function openQrRoomConfirmation(code) {
 }
 
 async function connectToRoom(code, button, idleLabel) {
-  if (code.length !== 6) { showToast('Enter all six digits to connect'); return; }
+  if (code.length !== 6) { showToast('Scan QR or enter room code to join'); return; }
   button.disabled = true;
   button.classList.add('is-loading');
   button.innerHTML = '<span class="button-spinner"></span><span>Connecting...</span>';
