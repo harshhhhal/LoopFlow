@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Duration Selector Test</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      padding: 40px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .test-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .modal-backdrop {
+      position: relative;
+      display: block;
+      background: transparent;
+    }
+    .room-modal {
+      position: relative;
+      background: var(--bg, #fff);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    .test-info {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f0f0f0;
+      border-radius: 8px;
+    }
+    .test-info h3 {
+      margin-top: 0;
+    }
+    .test-info ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>Duration Selector Alignment Test</h1>
+    <p>The white selected tile should be perfectly centered vertically with equal spacing above and below.</p>
+    
+    <div class="modal-backdrop" id="room-modal">
+      <section class="room-modal room-create-flow" role="dialog">
+        <div id="modal-content">
+          <div class="room-create-start-screen">
+            <div class="room-create-start-heading">
+              <div class="eyebrow">CREATE A ROOM</div>
+              <h2 class="modal-title">Choose how long it stays open.</h2>
+              <p class="modal-copy">Room and files are deleted when time ends.</p>
+            </div>
+            <div class="room-create-start-controls">
+              <span class="room-setting-label">Room duration</span>
+              <div class="room-duration-chips" role="group" aria-label="Room duration">
+                <span class="chips-slider" aria-hidden="true"></span>
+                <button type="button" data-duration="10">10 minutes</button>
+                <button type="button" class="is-selected" data-duration="30">30 minutes</button>
+                <button type="button" data-duration="60">1 hour</button>
+                <button type="button" data-duration="120">2 hours</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="test-info">
+      <h3>What was fixed:</h3>
+      <ul>
+        <li><strong>Root Cause:</strong> The <code>.chips-slider</code> had <code>top: 4px; left: 4px;</code> set in CSS, but JavaScript was using <code>transform: translate()</code> to position it. This caused the slider to be offset by 4px in both directions.</li>
+        <li><strong>Solution:</strong> Changed CSS to <code>top: 0; left: 0;</code> so the transform handles all positioning correctly.</li>
+        <li><strong>Additional Fix:</strong> Added <code>height</code> to the transition properties so height changes animate smoothly at different breakpoints.</li>
+      </ul>
+      <h3>Test Instructions:</h3>
+      <ul>
+        <li>Click each duration option to verify the white tile moves correctly</li>
+        <li>Visually inspect that the white tile has equal spacing above and below</li>
+        <li>Resize the window to test responsive behavior</li>
+        <li>All four labels should remain vertically centered</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Replicate the moveSlider logic from app.js
+    const moveSlider = (chip) => {
+      const slider = document.querySelector('.room-duration-chips .chips-slider');
+      if (!slider || !chip) return;
+      slider.style.width = chip.offsetWidth + 'px';
+      slider.style.height = chip.offsetHeight + 'px';
+      slider.style.transform = `translate(${chip.offsetLeft}px, ${chip.offsetTop}px)`;
+    };
+
+    // Position slider on page load
+    requestAnimationFrame(() => {
+      const defaultChip = document.querySelector('.room-duration-chips .is-selected');
+      const slider = document.querySelector('.room-duration-chips .chips-slider');
+      if (slider) slider.style.transition = 'none';
+      moveSlider(defaultChip);
+      requestAnimationFrame(() => {
+        if (slider) slider.style.transition = '';
+      });
+    });
+
+    // Handle click events
+    document.querySelector('.room-duration-chips')?.addEventListener('click', event => {
+      const option = event.target.closest('[data-duration]');
+      if (!option) return;
+      document.querySelectorAll('.room-duration-chips button').forEach(chip => 
+        chip.classList.toggle('is-selected', chip === option)
+      );
+      moveSlider(option);
+    });
+  </script>
+</body>
+</html>
