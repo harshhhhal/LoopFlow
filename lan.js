@@ -88,10 +88,11 @@ export function uploadLocalFile(roomId, file, senderId, senderName, onProgress =
   });
 }
 
-export function watchLocalRoom(roomId, onUpdate, onError) {
+export function watchLocalRoom(roomId, onUpdate, onError, onClear) {
   const stream = new EventSource(`${lanOrigin}/api/rooms/${roomId}/events`);
   stream.addEventListener('room', event => onUpdate(JSON.parse(event.data)));
   stream.addEventListener('expired', event => onUpdate(JSON.parse(event.data)));
+  stream.addEventListener('clear', event => onClear?.(JSON.parse(event.data)));
   stream.onerror = () => onError?.(new Error('Local room connection lost.'));
   return () => stream.close();
 }

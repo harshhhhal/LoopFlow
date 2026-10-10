@@ -49,7 +49,7 @@ const server = http.createServer(async (request, response) => {
       const action = match[2];
       if (!action && request.method === 'GET') { if (url.searchParams.get('join') === '1') room.activeUsers = Math.max(room.activeUsers, 2); broadcast(room, 'room', snapshot(room)); return json(response, 200, snapshot(room)); }
       if (!action && request.method === 'DELETE') { broadcast(room, 'expired', { status: 'deleted' }); rooms.delete(match[1]); return json(response, 200, { success: true }); }
-      if (action === 'clear' && request.method === 'POST') { room.messages = []; room.files = []; broadcast(room, 'room', snapshot(room)); return json(response, 200, snapshot(room)); }
+      if (action === 'clear' && request.method === 'POST') { room.messages = []; room.files = []; broadcast(room, 'clear', { cleared: true }); broadcast(room, 'room', snapshot(room)); return json(response, 200, snapshot(room)); }
       if (action === 'events' && request.method === 'GET') {
         response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'Access-Control-Allow-Origin': '*' });
         room.clients.add(response); response.write(`event: room\ndata: ${JSON.stringify(snapshot(room))}\n\n`); request.on('close', () => { if (!room.clients.delete(response)) return; room.activeUsers = Math.max(1, room.activeUsers - 1); broadcast(room, 'room', snapshot(room)); }); return;

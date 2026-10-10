@@ -4,7 +4,7 @@ import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, s
 import { uploadRoomFile } from './storage.js';
 import { lanMode, localBridgeAvailable, createLocalRoomWithExpiry, joinLocalRoom, deleteLocalRoom, clearLocalRoom, sendLocalMessage, uploadLocalFile, watchLocalRoom } from './lan.js';
 import { getMimeType, isImageFile, dataUrlToBlob, formatBytes, formatMessageText } from './utils.js';
-import { connectDirectRoom, closeDirectRoom } from './webrtc.js';
+import { connectDirectRoom, closeDirectRoom, sendDirectText } from './webrtc.js';
 
 const modal = document.querySelector('#room-modal');
 const modalContent = document.querySelector('#modal-content');
@@ -595,6 +595,11 @@ function handleDirectMessage(message) {
     directFileBuffer = null;
     const url = URL.createObjectURL(new Blob(file.chunks, { type: file.mime }));
     addDirectFileMessage(file.name, file.mime, file.size, url, 'remote-direct', file.senderName);
+  }
+  if (message.type === 'room-cleared') {
+    if (!isRoomHost) {
+      showToast('Host cleared the room');
+    }
   }
 }
 
@@ -1359,6 +1364,8 @@ function openChat(code, { creator = false, mode = lanMode ? 'lan' : 'firebase' }
     joinLocalRoom(code, !isRoomHost).then(updateLocalRoom).catch(error => showToast(error.message));
     stopLocalRoom = watchLocalRoom(code, updateLocalRoom, () => {
       if (!isRoomHost) showToast('Local room connection lost.');
+    }, () => {
+      if (!isRoomHost) showToast('Host cleared the room');
     });
   } else if (firebaseReady && db) {
     ensureAnonymousUser().then(user => {
@@ -1574,6 +1581,12 @@ async function clearRoomContent() {
   try {
     if (currentConnectionMode === 'lan') await clearLocalRoom(currentRoomCode);
     else await clearRoomData(currentRoomCode);
+    
+    // Notify participants via WebRTC for Firebase mode
+    if (currentConnectionMode === 'firebase') {
+      sendDirectText(JSON.stringify({ type: 'room-cleared' }));
+    }
+    
     latestRoomMessages = [];
     cancelledUploadMessage = null;
     cancelledUploadMessages = [];
