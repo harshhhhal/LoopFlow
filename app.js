@@ -1,5 +1,5 @@
 import { createRoom, joinRoom, makeRoomCode, watchRoom, deleteRoom, leaveRoomPresence, clearRoomData } from './room.js';
-import { db, firebaseReady, firebaseConfig, ensureAnonymousUser } from './firebase.js';
+import { db, firebaseReady, ensureAnonymousUser } from './firebase.js';
 import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js';
 import { uploadRoomFile } from './storage.js';
 import { lanMode, localBridgeAvailable, createLocalRoomWithExpiry, joinLocalRoom, deleteLocalRoom, clearLocalRoom, sendLocalMessage, uploadLocalFile, watchLocalRoom } from './lan.js';
@@ -485,13 +485,13 @@ function renderMessages(messages) {
       const isImg = isImageFile(message.fileName, message.fileType) && !message.fileURL?.startsWith('chunked:');
       
       if (isImg) {
-        return `<div class="room-message ${isOwn ? 'room-message-own' : ''}${fileSettleClass}" data-message-id="${escapeHtml(message.id || '')}">
+        return `<div class="room-message ${isOwn ? 'room-message-own' : ''}${fileSettleClass}" data-message-id="${message.id || ''}">
           ${!isOwn ? `<div class="message-sender-meta"><span class="message-sender">${escapeHtml(displaySenderName(message))}</span></div>` : ''}
           <div class="message-bubble-row">
             <div class="message-bubble message-bubble-file message-bubble-image">
-              <a class="file-image-card shared-file-card" href="#" data-file-source="${escapeHtml(message.fileURL || '')}" data-filename="${escapeHtml(message.fileName)}" data-filetype="${escapeHtml(message.fileType || '')}" data-filesize="${Number(message.fileSize || 0)}" data-download-key="message:${escapeHtml(message.id || message.fileName)}" download="${escapeHtml(message.fileName)}">
+              <a class="file-image-card shared-file-card" href="${message.fileURL}" data-filename="${escapeHtml(message.fileName)}" data-filetype="${escapeHtml(message.fileType || '')}" data-filesize="${Number(message.fileSize || 0)}" data-download-key="message:${escapeHtml(message.id || message.fileName)}" target="_blank" rel="noopener" download="${escapeHtml(message.fileName)}">
                 <div class="image-preview-wrap">
-                  <img class="file-preview-img" src="${escapeHtml(safePreviewUrl(message.fileURL))}" alt="${escapeHtml(message.fileName)}" loading="lazy" onload="this.classList.add('is-loaded')">
+                  <img class="file-preview-img" src="${message.fileURL}" alt="${escapeHtml(message.fileName)}" loading="lazy" onload="this.classList.add('is-loaded')">
                   <div class="image-preview-overlay">
                     <span class="image-download-badge"><i data-lucide="download"></i> Download</span>
                   </div>
@@ -509,12 +509,12 @@ function renderMessages(messages) {
         </div>`;
       }
 
-      return `<div class="room-message ${isOwn ? 'room-message-own' : ''}${fileSettleClass}" data-message-id="${escapeHtml(message.id || '')}">
+      return `<div class="room-message ${isOwn ? 'room-message-own' : ''}${fileSettleClass}" data-message-id="${message.id || ''}">
         ${!isOwn ? `<div class="message-sender-meta"><span class="message-sender">${escapeHtml(displaySenderName(message))}</span></div>` : ''}
         <div class="message-bubble-row">
           <div class="message-bubble message-bubble-file">
-            <a class="shared-file-card" href="#" data-file-source="${escapeHtml(message.fileURL || '')}" data-filename="${escapeHtml(message.fileName)}" data-filetype="${escapeHtml(message.fileType || '')}" data-filesize="${Number(message.fileSize || 0)}" data-download-key="message:${escapeHtml(message.id || message.fileName)}" download="${escapeHtml(message.fileName)}">
-              <span class="file-chip">${escapeHtml(ext)}</span>
+            <a class="shared-file-card" href="${message.fileURL}" data-filename="${escapeHtml(message.fileName)}" data-filetype="${escapeHtml(message.fileType || '')}" data-filesize="${Number(message.fileSize || 0)}" data-download-key="message:${escapeHtml(message.id || message.fileName)}" target="_blank" rel="noopener" download="${escapeHtml(message.fileName)}">
+              <span class="file-chip">${ext}</span>
               <div class="file-info-group">
                 <b class="file-card-title" title="${escapeHtml(message.fileName)}">${escapeHtml(message.fileName)}</b>
                 <small class="file-card-sub">${formatBytes(message.fileSize)}</small>
@@ -626,13 +626,9 @@ function clearDirectFileMessages() {
 }
 
 async function handleFileCardClick(event, link, fileName = '', fileType = '') {
-  const rawHref = link.dataset.fileSource || '';
-  if (!rawHref) return;
+  const rawHref = link.getAttribute('href');
+  if (!rawHref || rawHref === '#') return;
   event.preventDefault();
-  if (!isSafeFileSource(rawHref)) {
-    showToast('This file link is not supported.');
-    return;
-  }
   if (link.classList.contains('is-downloading') || activeDownloadProgress.has(link.dataset.downloadKey)) return;
   link.classList.add('is-downloading');
   const downloadName = link.getAttribute('download') || fileName || 'download';
@@ -853,13 +849,13 @@ function renderFiles(files) {
     const isImg = isImageFile(file.fileName, file.fileType) && !file.fileURL?.startsWith('chunked:');
     const ext = (file.fileName?.split('.').pop() || 'FILE').slice(0, 4).toUpperCase();
     const preview = isImg
-      ? `<img class="file-preview" src="${escapeHtml(safePreviewUrl(file.fileURL))}" alt="" loading="lazy" onload="this.classList.add('is-loaded')">`
+      ? `<img class="file-preview" src="${file.fileURL}" alt="" loading="lazy" onload="this.classList.add('is-loaded')">`
       : file.fileType?.startsWith('video/') && file.fileURL && !file.fileURL.startsWith('chunked:')
-        ? `<video class="file-preview" src="${escapeHtml(safePreviewUrl(file.fileURL))}" muted preload="metadata"></video>`
+        ? `<video class="file-preview" src="${file.fileURL}" muted preload="metadata"></video>`
         : file.fileType?.startsWith('audio/')
           ? '<span class="file-chip"><i data-lucide="music"></i></span>'
-          : `<span class="file-chip">${escapeHtml(ext)}</span>`;
-    return `<a class="shared-file-card" href="#" data-file-source="${escapeHtml(file.fileURL || '')}" data-filename="${escapeHtml(file.fileName)}" data-filetype="${escapeHtml(file.fileType || '')}" data-filesize="${Number(file.fileSize || 0)}" data-download-key="sidebar-file:${escapeHtml(file.id || file.fileName)}" download="${escapeHtml(file.fileName)}">${preview}<div><b>${escapeHtml(file.fileName)}</b><small>${formatBytes(file.fileSize)}</small></div><i data-lucide="download"></i></a>`;
+          : `<span class="file-chip">${ext}</span>`;
+    return `<a class="shared-file-card" href="${file.fileURL || '#'}" data-filename="${escapeHtml(file.fileName)}" data-filetype="${escapeHtml(file.fileType || '')}" data-filesize="${Number(file.fileSize || 0)}" data-download-key="sidebar-file:${escapeHtml(file.id || file.fileName)}" target="_blank" rel="noopener" download="${escapeHtml(file.fileName)}">${preview}<div><b>${escapeHtml(file.fileName)}</b><small>${formatBytes(file.fileSize)}</small></div><i data-lucide="download"></i></a>`;
   });
   list.innerHTML = folderCards.concat(fileCards).join('') || '<div class="files-empty"><small>No files shared yet</small></div>';
   window.lucide?.createIcons();
@@ -946,7 +942,6 @@ function uniqueZipName(fileName, usedNames) {
 async function getFileBlob(file, onProgress = null) {
   const fileUrl = file.fileURL || '';
   const mimeType = getMimeType(file.fileName, file.fileType);
-  if (!isSafeFileSource(fileUrl)) throw new Error('Unsupported file source.');
   if (fileUrl.startsWith('chunked:')) {
     const [, fileId] = fileUrl.split(':');
     return downloadChunkedFile(currentRoomCode, fileId, mimeType, file.fileName,
@@ -957,7 +952,7 @@ async function getFileBlob(file, onProgress = null) {
     onProgress?.(blob.size, blob.size);
     return blob;
   }
-  if (fileUrl.startsWith('https://') || fileUrl.startsWith('blob:')) {
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
     const response = await fetch(fileUrl);
     if (!response.ok) throw new Error(`Could not retrieve ${file.fileName || 'file'}`);
     const contentLength = Number(response.headers.get('content-length') || file.fileSize || 0);
@@ -1076,38 +1071,6 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
 }
 
-function isSafeFileSource(value) {
-  const source = String(value || '');
-  if (/^chunked:[a-zA-Z0-9_-]+:\d+$/.test(source)) return true;
-  if (/^data:[\w.+-]+\/[\w.+-]+;base64,[a-z0-9+/=\r\n]*$/i.test(source)) return true;
-  if (source.startsWith('blob:')) {
-    try { return new URL(source).origin === location.origin; } catch { return false; }
-  }
-  try {
-    const url = new URL(source);
-    return url.protocol === 'https:'
-      && url.hostname === 'firebasestorage.googleapis.com'
-      && url.pathname.startsWith(`/v0/b/${firebaseConfig.storageBucket}/o/`);
-  } catch {
-    return false;
-  }
-}
-
-function safePreviewUrl(value) {
-  const source = String(value || '');
-  if (!isSafeFileSource(source)) return '';
-  if (/^data:image\/(?:png|jpeg|gif|webp|avif);base64,/i.test(source)) return source;
-  if (source.startsWith('blob:')) return source;
-  try {
-    const url = new URL(source);
-    return url.protocol === 'https:'
-      && url.hostname === 'firebasestorage.googleapis.com'
-      && url.pathname.startsWith(`/v0/b/${firebaseConfig.storageBucket}/o/`) ? source : '';
-  } catch {
-    return '';
-  }
-}
-
 async function openCreateRoom(event) {
   const renderCreateRoomState = (state, content) => {
     modalContent.dataset.createRoomState = state;
@@ -1194,7 +1157,7 @@ async function openCreateRoom(event) {
       document.querySelector('#enter-created-room')?.addEventListener('click', () => enterCreatedRoom(false));
       if (createdRoom.mode === 'firebase') {
         stopCreateRoomWatch = watchRoom(code, room => {
-          if (room?.status === 'active' && (Number(room.activeUsers) > 1 || (room.members?.length || 0) > 1)) {
+          if (room?.status === 'active' && (Number(room.activeUsers) > 1 || (room.devices?.length || 0) > 1)) {
             enterCreatedRoom(true);
           }
         }, error => console.warn('Room join watcher failed:', error));
@@ -1267,7 +1230,7 @@ function openJoinRoom(prefilledCode) {
 }
 function openChat(code, { creator = false, mode = lanMode ? 'lan' : 'firebase' } = {}) {
   const isCreatorParam = new URLSearchParams(location.search).get('creator') === '1';
-  isRoomHost = mode === 'lan' ? Boolean(creator || isCreatorParam) : Boolean(creator);
+  isRoomHost = Boolean(creator || isCreatorParam);
 
   if (landingView && chatView) {
     landingView.hidden = true;
@@ -2243,6 +2206,8 @@ if (directRoomCode?.length === 6) {
   const isCreator = roomParams.get('creator') === '1';
   if (isChatPage && lanMode) {
     openChat(directRoomCode, { creator: isCreator, mode: 'lan' });
+  } else if (isChatPage && isCreator) {
+    openChat(directRoomCode, { creator: true });
   } else if (isChatPage) {
     joinRoom(directRoomCode)
       .then(() => openChat(directRoomCode))

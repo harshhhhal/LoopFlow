@@ -1,6 +1,5 @@
-import { firebaseReady, db, storage, firebaseConfig, ensureAnonymousUser } from './firebase.js';
-import { doc, getDoc, getDocs, collection, onSnapshot, setDoc, deleteDoc, serverTimestamp, Timestamp, runTransaction } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js';
-import { refFromURL, deleteObject } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js';
+import { firebaseReady, db, ensureAnonymousUser } from './firebase.js';
+import { doc, getDoc, getDocs, collection, onSnapshot, setDoc, updateDoc, deleteDoc, serverTimestamp, Timestamp, runTransaction } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js';
 
 const ROOM_LIFETIME_MS = 30 * 60 * 1000;
 
@@ -9,11 +8,21 @@ export function roomLifetimeMs(minutes = 30) {
   return (Number.isFinite(value) && value > 0 ? value : 30) * 60 * 1000;
 }
 
+export function getClientDeviceId() {
+  let id = localStorage.getItem('loopflow_device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).slice(2, 11) + Date.now().toString(36);
+    localStorage.setItem('loopflow_device_id', id);
+  }
+  return id;
+}
+
 export function makeRoomCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 export async function createRoom(roomId, lifetimeMinutes = 30) {
+  const deviceId = getClientDeviceId();
   if (!firebaseReady) return { roomId, mode: 'demo' };
   try {
     const user = await ensureAnonymousUser();
@@ -24,7 +33,8 @@ export async function createRoom(roomId, lifetimeMinutes = 30) {
       createdAt: serverTimestamp(),
       expiresAt,
       activeUsers: 1,
-      members: [user.uid],
+      devices: [deviceId],
+      ownerDeviceId: deviceId,
       status: 'active',
       lifetimeMinutes: Number(lifetimeMinutes) || 30,
       ownerId: user?.uid || 'host'
@@ -38,9 +48,9 @@ export async function createRoom(roomId, lifetimeMinutes = 30) {
 
 export async function joinRoom(roomId) {
   if (!firebaseReady) return { roomId, mode: 'demo' };
+  const deviceId = getClientDeviceId();
   try {
-    const user = await ensureAnonymousUser();
-    if (!user) throw new Error('Could not sign in to Firebase. Please try again.');
+    await ensureAnonymousUser();
     const roomRef = doc(db, 'rooms', roomId);
     let joinedRoom;
     await runTransaction(db, async transaction => {
@@ -53,25 +63,18 @@ export async function joinRoom(roomId) {
         throw new Error('This room has expired or been closed.');
       }
 
-      const currentMembers = Array.isArray(room.members)
-        ? room.members
-        : (room.ownerId ? [room.ownerId] : []);
-      if (!Array.isArray(room.members) && Number(room.activeUsers) >= 2 && user.uid !== room.ownerId) {
-        throw new Error('Room is full. A maximum of 2 devices are allowed at a time.');
-      }
-      const isAlreadyMember = currentMembers.includes(user.uid);
-      if (!isAlreadyMember && currentMembers.length >= 2) {
+      const currentDevices = Array.isArray(room.devices) ? room.devices : [];
+      const isAlreadyMember = currentDevices.includes(deviceId) || room.ownerDeviceId === deviceId;
+      if (!isAlreadyMember && currentDevices.length >= 2) {
         throw new Error('Room is full. A maximum of 2 devices are allowed at a time.');
       }
 
-      const updatedMembers = isAlreadyMember ? currentMembers : [...currentMembers, user.uid];
-      if (!isAlreadyMember) {
-        transaction.update(roomRef, {
-          members: updatedMembers,
-          activeUsers: updatedMembers.length
-        });
-      }
-      joinedRoom = { ...room, members: updatedMembers, activeUsers: updatedMembers.length };
+      const updatedDevices = isAlreadyMember ? currentDevices : [...currentDevices, deviceId];
+      transaction.update(roomRef, {
+        devices: updatedDevices,
+        activeUsers: updatedDevices.length
+      });
+      joinedRoom = { ...room, devices: updatedDevices, activeUsers: updatedDevices.length };
     });
 
     return { roomId, db, mode: 'firebase', room: joinedRoom };
@@ -87,19 +90,17 @@ export async function joinRoom(roomId) {
 export async function leaveRoomPresence(roomId) {
   if (!firebaseReady || !db) return;
   try {
-    const user = await ensureAnonymousUser();
-    if (!user) return;
+    const deviceId = getClientDeviceId();
     const roomRef = doc(db, 'rooms', roomId);
-    await runTransaction(db, async transaction => {
-      const roomSnapshot = await transaction.get(roomRef);
-      if (!roomSnapshot.exists()) return;
+    const roomSnapshot = await getDoc(roomRef);
+    if (roomSnapshot.exists()) {
       const room = roomSnapshot.data();
-      if (room.ownerId === user.uid) return;
-      const members = (Array.isArray(room.members) ? room.members : []).filter(id => id !== user.uid);
-      if (members.length !== room.members?.length) {
-        transaction.update(roomRef, { members, activeUsers: members.length });
-      }
-    });
+      const currentDevices = (Array.isArray(room.devices) ? room.devices : []).filter(d => d !== deviceId);
+      await updateDoc(roomRef, {
+        devices: currentDevices,
+        activeUsers: Math.max(0, currentDevices.length)
+      }).catch(() => {});
+    }
   } catch {}
 }
 
@@ -107,12 +108,8 @@ export async function deleteRoom(roomId) {
   if (!firebaseReady || !db) return;
   try {
     const roomRef = doc(db, 'rooms', roomId);
-    const user = await ensureAnonymousUser();
-    if (!user) return;
-    const roomSnapshot = await getDoc(roomRef);
-    if (!roomSnapshot.exists() || roomSnapshot.data().ownerId !== user.uid) return;
-    await clearRoomData(roomId);
-    await deleteDoc(roomRef);
+    await setDoc(roomRef, { status: 'deleted', activeUsers: 0 }, { merge: true }).catch(() => {});
+    await deleteDoc(roomRef).catch(() => {});
   } catch (err) {
     console.warn('Could not delete room:', err);
   }
@@ -122,49 +119,9 @@ export async function clearRoomData(roomId) {
   if (!firebaseReady || !db) return;
   const user = await ensureAnonymousUser();
   if (!user) return;
-  const roomSnapshot = await getDoc(doc(db, 'rooms', roomId));
-  if (!roomSnapshot.exists() || roomSnapshot.data().ownerId !== user.uid) {
-    throw new Error('Only the room owner can clear its contents.');
-  }
-
-  const [messagesSnapshot, filesSnapshot, signalsSnapshot] = await Promise.all([
-    getDocs(collection(db, 'rooms', roomId, 'messages')),
-    getDocs(collection(db, 'rooms', roomId, 'files')),
-    getDocs(collection(db, 'rooms', roomId, 'webrtc'))
-  ]);
-
-  const chunkSnapshots = await Promise.all(filesSnapshot.docs.map(file =>
-    getDocs(collection(db, 'rooms', roomId, 'files', file.id, 'chunks'))
-  ));
-  const storageRefs = filesSnapshot.docs
-    .map(file => file.data().fileURL)
-    .filter(url => {
-      if (typeof url !== 'string') return false;
-      try {
-        const parsed = new URL(url);
-        return parsed.protocol === 'https:'
-          && parsed.hostname === 'firebasestorage.googleapis.com'
-          && decodeURIComponent(parsed.pathname).includes(`/b/${firebaseConfig.storageBucket}/o/rooms/${roomId}/`);
-      } catch {
-        return false;
-      }
-    });
-  await Promise.all(storageRefs.map(async url => {
-    try {
-      await deleteObject(refFromURL(storage, url));
-    } catch (error) {
-      if (error?.code !== 'storage/object-not-found') throw error;
-    }
-  }));
-
-  const refsToDelete = [
-    ...messagesSnapshot.docs.map(item => item.ref),
-    ...filesSnapshot.docs.map(item => item.ref),
-    ...signalsSnapshot.docs.map(item => item.ref),
-    ...chunkSnapshots.flatMap(snapshot => snapshot.docs.map(item => item.ref))
-  ];
-  for (let index = 0; index < refsToDelete.length; index += 100) {
-    await Promise.all(refsToDelete.slice(index, index + 100).map(ref => deleteDoc(ref)));
+  for (const child of ['messages', 'files']) {
+    const snapshot = await getDocs(collection(db, 'rooms', roomId, child));
+    await Promise.all(snapshot.docs.map(item => deleteDoc(item.ref)));
   }
 }
 
