@@ -40,18 +40,18 @@
     },
     "creation": [
       "app.js invokes createLocalRoom() when the companion service is reachable; otherwise it calls createRoom(code).",
-      "A Firebase room document includes roomId, createdAt, expiresAt, activeUsers, devices, ownerDeviceId, ownerId, and status.",
+      "A Firebase room document includes roomId, createdAt, expiresAt, activeUsers, members (anonymous Firebase UIDs), status, lifetimeMinutes, and ownerId.",
       "Room lifetime is 30 minutes from creation."
     ],
     "join": [
       "A user enters the six-digit code or opens a QR URL.",
       "Firebase joinRoom() validates that the room exists, is active, and has not expired.",
-      "Firebase rooms allow a maximum of two distinct device IDs. Device IDs are stored in the browser's localStorage.",
+      "Firebase rooms allow at most two anonymous Firebase UIDs. Firestore rules authorize a joiner to add only their own UID.",
       "LAN join requests mark the room as having up to two active users."
     ],
     "host_and_leave": [
-      "The creator is treated as host. Leaving as host deletes/closes the room for everyone.",
-      "A non-host leaving Firebase mode removes its device ID from the room presence list.",
+      "The Firebase owner is identified by ownerId and checked by Firestore rules. The creator URL flag is not authorization.",
+      "A non-owner leaving Firebase mode removes their UID from the room membership list.",
       "The room page watches room state; a deleted or missing room causes joined non-host devices to leave the stale workspace."
     ]
   },
@@ -113,8 +113,8 @@
   "ui_and_security_notes": {
     "rendering": "app.js uses escapeHtml() before inserting file names, sender names, and message content into generated HTML. Text rendering also detects links and code-like content for richer display.",
     "file_previews": "Images that are not chunked can appear as lazy-loaded image previews. Other files show a short extension chip.",
-    "room_privacy": "Rooms are temporary but are not end-to-end encrypted. Firebase security depends on the deployed Firestore and Storage rules. LAN data is accessible to devices that can access the local server and know a room code.",
-    "room_expiry": "Countdown UI is client-side for display. Firebase expiry validation happens when joining; LAN expiry is enforced by the local server when accessing a room."
+    "room_privacy": "Rooms are temporary but are not end-to-end encrypted. Firebase security depends on deploying the Firestore and Storage membership rules. LAN data is accessible to devices that can access the local server and know a room code.",
+    "room_expiry": "Countdown UI is client-side for display. Firebase rules reject writes after expiresAt and a scheduled Cloud Function deletes expired Firestore room trees and Storage objects; LAN expiry is enforced by the local server when accessing a room."
   },
   "source_map": {
     "app.js": "Main controller: landing actions, room page state, Firebase and LAN subscriptions, message rendering, upload UI, downloads, ZIP creation, timers, QR code, theming, and leave actions.",

@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "source": "functions"
+  },
   "firestore": {
     "rules": "firestore.rules"
   },
@@ -14,6 +17,7 @@
       "firebase.json",
       "firestore.rules",
       "storage.rules",
+      "functions/**",
       "**/.*",
       "**/node_modules/**"
     ]

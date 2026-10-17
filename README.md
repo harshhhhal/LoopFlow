@@ -172,7 +172,7 @@ LOOPFLOW_PORT=8080 node lan-server.js
 
 4. **Update security rules:**
    
-   ⚠️ **CRITICAL:** Replace the temporary rules in `firestore.rules` before deploying! The default rules expire on **October 12, 2026** and allow unrestricted access.
+   The checked-in `firestore.rules` and `storage.rules` restrict room data to its members and owner. Keep these files in sync with the app before deploying.
 
 5. **Fix CORS for Storage (if needed):**
    ```bash
@@ -194,9 +194,11 @@ firebase login
 # Deploy hosting
 firebase deploy --only hosting
 
-# Deploy database rules
-firebase deploy --only firestore:rules,storage
+# Deploy room rules and automatic expiry cleanup
+firebase deploy --only firestore:rules,storage,functions --project YOUR_PROJECT_ID
 ```
+
+Storage rules read room membership from Firestore, so Firebase may ask you to enable cross-service permissions when you deploy. Expiry cleanup runs as a scheduled Cloud Function and requires a billing-enabled Firebase project.
 
 **Option B: Vercel**
 ```bash
@@ -243,36 +245,13 @@ The app intelligently chooses the best connection method:
    - ✅ HTTPS encrypts data in transit (on hosted versions)
 
 3. **Firebase Rules**
-   - 🚨 Default rules expire **October 12, 2026**
-   - 🚨 Default rules allow unrestricted access
-   - ✅ Implement proper authentication-scoped rules before deploying
-   - ✅ Configure automatic cleanup for expired rooms
+   - ✅ Firestore access is limited to room members; room deletion and content clearing are owner-only
+   - ✅ Storage access checks room membership and enforces the 50 MiB upload limit
+   - ✅ The scheduled Cloud Function deletes expired Firestore room trees and Storage objects
 
 4. **Data Lifetime**
    - LAN: Auto-deleted on expiration or server restart
-   - Firebase: Requires manual cleanup configuration
-   - Consider Cloud Functions for automatic deletion
-
-### 🛡️ Recommended Security Rules
-
-Replace `firestore.rules` with production-ready rules:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Only authenticated users can access rooms
-    match /rooms/{roomId} {
-      allow read, write: if request.auth != null 
-                         && request.time < resource.data.expiresAt;
-    }
-    
-    match /rooms/{roomId}/messages/{messageId} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}
-```
+   - Firebase: Expired room trees and Storage objects are removed by the scheduled function
 
 ---
 
@@ -305,6 +284,7 @@ LoopFlow/
 │   ├── firebase.json       # Firebase hosting config
 │   ├── firestore.rules     # Database security rules
 │   ├── storage.rules       # Storage security rules
+│   ├── functions/          # Scheduled Firebase room cleanup
 │   └── cors.json           # Storage CORS policy
 │
 ├── 📱 PWA
@@ -358,7 +338,7 @@ Yes! Run the LAN server on your local network. Both devices must be on the same 
 No. Files are automatically deleted when:
 - The room expires (10 min - 2 hours)
 - The LAN server restarts (LAN mode)
-- Manual cleanup runs (Firebase mode - requires configuration)
+- Scheduled cleanup runs (Firebase mode - requires the Cloud Function deployment)
 
 </details>
 
