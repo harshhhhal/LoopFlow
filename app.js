@@ -69,6 +69,17 @@ function firebaseErrorMessage(error, fallback) {
   return error?.message || fallback;
 }
 
+async function handleRoomListenerError(error, roomId, fallback) {
+  if (error?.code === 'permission-denied') {
+    try {
+      const roomSnapshot = await getDoc(doc(db, 'rooms', roomId));
+      const room = roomSnapshot.exists() ? roomSnapshot.data() : null;
+      if (!room || room.status !== 'active') return;
+    } catch {}
+  }
+  if (currentRoomCode === roomId) showToast(firebaseErrorMessage(error, fallback));
+}
+
 // Initial Hero QR preview
 if (window.QRCode && document.querySelector('#hero-qr')) {
   const qrContainer = document.querySelector('#hero-qr');
@@ -1372,11 +1383,11 @@ function openChat(code, { creator = false, mode = lanMode ? 'lan' : 'firebase' }
       window.loopFlowUserId = user?.uid;
       stopMessages = onSnapshot(query(collection(db, 'rooms', code, 'messages'), orderBy('createdAt')), snapshot => {
         renderMessages(snapshot.docs.map(item => ({ id: item.id, ...item.data({ serverTimestamps: 'estimate' }) })));
-      }, error => showToast(firebaseErrorMessage(error, 'Messages error')));
+      }, error => { void handleRoomListenerError(error, code, 'Messages error'); });
 
       stopFiles = onSnapshot(query(collection(db, 'rooms', code, 'files'), orderBy('uploadedAt', 'desc')), snapshot => {
         renderFiles(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
-      }, error => showToast(firebaseErrorMessage(error, 'Files error')));
+      }, error => { void handleRoomListenerError(error, code, 'Files error'); });
 
       stopRoomPresence = watchRoom(code, room => {
         const countEl = document.querySelector('#chat-devices-count');

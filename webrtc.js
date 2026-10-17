@@ -99,6 +99,14 @@ export async function connectDirectRoom(roomId, isHost, { onStatus = () => {}, o
         console.warn('WebRTC signaling error:', error);
       }
     }
+  }, error => {
+    // The signaling collection becomes inaccessible when the room closes.
+    // This is expected during room teardown; other listener errors still need
+    // to be visible for diagnosing a broken direct connection.
+    if (error?.code !== 'permission-denied') {
+      console.warn('WebRTC signaling listener error:', error);
+    }
+    onStatus({ state: 'fallback', label: 'Fallback transport active' });
   });
 
   directConnectionCleanup = stopSignals;
