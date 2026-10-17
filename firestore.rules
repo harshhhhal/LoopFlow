@@ -2,8 +2,61 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2026, 10, 12);
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function roomExists(roomId) {
+      return exists(/databases/$(database)/documents/rooms/$(roomId));
+    }
+
+    function roomIsActive(roomId) {
+      return roomExists(roomId)
+        && get(/databases/$(database)/documents/rooms/$(roomId)).data.status == 'active';
+    }
+
+    match /rooms/{roomId} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'roomId', 'createdAt', 'expiresAt', 'activeUsers', 'devices',
+          'ownerDeviceId', 'status', 'lifetimeMinutes', 'ownerId'
+        ])
+        && request.resource.data.roomId == roomId
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.lifetimeMinutes in [10, 30, 60, 120]
+        && request.resource.data.activeUsers == 1
+        && request.resource.data.status == 'active'
+        && request.resource.data.devices is list
+        && request.resource.data.devices.size() == 1
+        && request.resource.data.devices[0] == request.resource.data.ownerDeviceId;
+
+      allow read: if signedIn();
+
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['devices', 'activeUsers', 'status'])
+        && (
+          (
+            request.resource.data.status == 'active'
+            && request.resource.data.devices is list
+            && request.resource.data.devices.size() <= 2
+            && request.resource.data.activeUsers == request.resource.data.devices.size()
+          )
+          || (
+            request.resource.data.status == 'deleted'
+            && request.resource.data.activeUsers == 0
+          )
+        );
+
+      allow delete: if signedIn();
+    }
+
+    // Messages, file metadata/chunks, and WebRTC signaling all live below a room.
+    match /rooms/{roomId}/{document=**} {
+      allow read, write: if signedIn() && roomIsActive(roomId);
     }
   }
 }

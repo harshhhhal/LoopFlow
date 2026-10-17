@@ -26,6 +26,7 @@ export async function createRoom(roomId, lifetimeMinutes = 30) {
   if (!firebaseReady) return { roomId, mode: 'demo' };
   try {
     const user = await ensureAnonymousUser();
+    if (!user) throw new Error('Could not sign in to Firebase. Please try again.');
     const expiresAt = Timestamp.fromMillis(Date.now() + roomLifetimeMs(lifetimeMinutes));
     await setDoc(doc(db, 'rooms', roomId), {
       roomId,
@@ -40,8 +41,8 @@ export async function createRoom(roomId, lifetimeMinutes = 30) {
     });
     return { roomId, db, mode: 'firebase', expiresAt };
   } catch (err) {
-    console.warn('Firebase room creation fallback:', err);
-    return { roomId, mode: 'demo' };
+    console.warn('Firebase room creation failed:', err);
+    throw err;
   }
 }
 
