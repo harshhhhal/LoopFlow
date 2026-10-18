@@ -32,7 +32,7 @@ function getRoom(id, response) { const room = rooms.get(id); if (!room || room.e
 function body(request) { return new Promise((resolve, reject) => { let raw = ''; request.on('data', chunk => { raw += chunk; if (raw.length > MAX_BODY) reject(new Error('File is too large for this temporary room.')); }); request.on('end', () => { try { resolve(raw ? JSON.parse(raw) : {}); } catch { reject(new Error('Invalid request.')); } }); request.on('error', reject); }); }
 
 const server = http.createServer(async (request, response) => {
-  if (request.method === 'OPTIONS') { response.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' }); return response.end(); }
+  if (request.method === 'OPTIONS') { response.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' }); return response.end(); }
   const url = new URL(request.url, `http://${request.headers.host}`);
   try {
     if (url.pathname === '/api/health') return json(response, 200, { mode: 'lan', address: localAddress(), port: PORT });

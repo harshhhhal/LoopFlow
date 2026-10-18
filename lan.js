@@ -35,6 +35,15 @@ export async function localBridgeAvailable() {
 export function createLocalRoomWithExpiry(minutes = 30) { return request('/api/rooms', { method: 'POST', body: JSON.stringify({ lifetimeMinutes: minutes }) }); }
 export function joinLocalRoom(roomId, joinsRoom = true) { return request(`/api/rooms/${roomId}${joinsRoom ? '?join=1' : ''}`, { method: 'GET' }); }
 export function deleteLocalRoom(roomId) { return request(`/api/rooms/${roomId}`, { method: 'DELETE' }); }
+export function deleteLocalRoomOnPageHide(roomId) {
+  try {
+    void fetch(`${lanOrigin}/api/rooms/${roomId}`, {
+      method: 'DELETE',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(() => {});
+  } catch {}
+}
 export function clearLocalRoom(roomId) { return request(`/api/rooms/${roomId}/clear`, { method: 'POST', body: '{}' }); }
 export function sendLocalMessage(roomId, content, senderName, senderId, message = null) { return request(`/api/rooms/${roomId}/messages`, { method: 'POST', body: JSON.stringify({ content, senderName, senderId, message }) }); }
 export function uploadLocalFile(roomId, file, senderId, senderName, onProgress = () => {}, signal = null) {

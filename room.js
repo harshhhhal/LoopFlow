@@ -1,7 +1,8 @@
-import { firebaseReady, db, ensureAnonymousUser } from './firebase.js';
+import { firebaseReady, db, ensureAnonymousUser, firebaseConfig } from './firebase.js';
 import { doc, getDoc, getDocs, collection, onSnapshot, setDoc, updateDoc, deleteDoc, serverTimestamp, Timestamp, runTransaction } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js';
 
 const ROOM_LIFETIME_MS = 30 * 60 * 1000;
+let roomAuthUser = null;
 
 export function roomLifetimeMs(minutes = 30) {
   const value = Number(minutes);
@@ -27,6 +28,7 @@ export async function createRoom(roomId, lifetimeMinutes = 30) {
   try {
     const user = await ensureAnonymousUser();
     if (!user) throw new Error('Could not sign in to Firebase. Please try again.');
+    roomAuthUser = user;
     const expiresAt = Timestamp.fromMillis(Date.now() + roomLifetimeMs(lifetimeMinutes));
     await setDoc(doc(db, 'rooms', roomId), {
       roomId,
@@ -50,7 +52,7 @@ export async function joinRoom(roomId) {
   if (!firebaseReady) return { roomId, mode: 'demo' };
   const deviceId = getClientDeviceId();
   try {
-    await ensureAnonymousUser();
+    roomAuthUser = await ensureAnonymousUser();
     const roomRef = doc(db, 'rooms', roomId);
     let joinedRoom;
     await runTransaction(db, async transaction => {
@@ -113,6 +115,21 @@ export async function deleteRoom(roomId) {
   } catch (err) {
     console.warn('Could not delete room:', err);
   }
+}
+
+// pagehide cannot wait for Firestore SDK promises to finish. A small keepalive
+// REST request gives the browser a chance to complete the host's room deletion.
+export function deleteRoomOnPageHide(roomId) {
+  if (!firebaseReady || !roomAuthUser) {
+    void deleteRoom(roomId);
+    return;
+  }
+  try {
+    void roomAuthUser.getIdToken().then(token => fetch(
+      `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/rooms/${roomId}`,
+      { method: 'DELETE', headers: { Authorization: `Bearer ${token}` }, keepalive: true }
+    )).catch(() => {});
+  } catch {}
 }
 
 export async function clearRoomData(roomId) {

@@ -1,8 +1,8 @@
-import { createRoom, joinRoom, makeRoomCode, watchRoom, deleteRoom, leaveRoomPresence, clearRoomData } from './room.js';
+import { createRoom, joinRoom, makeRoomCode, watchRoom, deleteRoom, deleteRoomOnPageHide, leaveRoomPresence, clearRoomData } from './room.js';
 import { db, firebaseReady, ensureAnonymousUser } from './firebase.js';
 import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js';
 import { uploadRoomFile } from './storage.js';
-import { lanMode, localBridgeAvailable, createLocalRoomWithExpiry, joinLocalRoom, deleteLocalRoom, clearLocalRoom, sendLocalMessage, uploadLocalFile, watchLocalRoom } from './lan.js';
+import { lanMode, localBridgeAvailable, createLocalRoomWithExpiry, joinLocalRoom, deleteLocalRoom, deleteLocalRoomOnPageHide, clearLocalRoom, sendLocalMessage, uploadLocalFile, watchLocalRoom } from './lan.js';
 import { getMimeType, isImageFile, dataUrlToBlob, formatBytes, formatMessageText } from './utils.js';
 import { connectDirectRoom, closeDirectRoom, sendDirectText } from './webrtc.js';
 
@@ -1543,9 +1543,9 @@ window.addEventListener('pagehide', () => {
   if (currentRoomCode) {
     if (isRoomHost) {
       if (currentConnectionMode === 'lan') {
-        deleteLocalRoom(currentRoomCode).catch(() => {});
+        deleteLocalRoomOnPageHide(currentRoomCode);
       } else {
-        deleteRoom(currentRoomCode).catch(() => {});
+        deleteRoomOnPageHide(currentRoomCode);
       }
     } else {
       if (currentConnectionMode === 'firebase') {
